@@ -1,349 +1,84 @@
-<html>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-   <head>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-      <meta charset="UTF-8" />
-         <title>Animation in HTML5 using the canvas element</title>
-	    <script>
-		var dx=5,			//µ±Ç°ËÙÂÊ
-		    rate=1,			//µ±Ç°²¥·ÅËÙ¶È
-		    ani,			//µ±Ç°¶¯»­Ñ­»·
-		    c,				//»­Í¼(Canvas Context)
-		    w,				//Æû³µ[Òþ²ØµÄ](Canvas Context)
-		    grassHeight=130,		//±³¾°¸ß¶È
-		    carAlpha=0,			//ÂÖÌ¥µÄÐý×ª½Ç¶È
-		    carX=-400,			//xÖá·½ÏòÉÏÆû³µµÄÎ»ÖÃ(½«±»¸Ä±ä)
-		    carY=300,			//yÖá·½ÏòÉÏÆû³µµÄÎ»ÖÃ(½«±£³ÖÎª³£Á¿)
-		    carWidth=400,		//Æû³µµÄ¿í¶È
-		    carHeight=130,		//Æû³µµÄ¸ß¶È
-		    tiresDelta=15,		//´ÓÒ»¸öÂÖÌ¥µ½×î½Ó½üµÄÆû³µµ×ÅÌµÄ¾àÀë
-		    axisDelta=20,		//Æû³µµ×²¿µ×ÅÌµÄÖáÓëÂÖÌ¥µÄ¾àÀë
-		    radius=60;			//ÂÖÌ¥µÄ°ë¾¶
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Canvas</title>
+    <meta name = "viewport" content = "width = device-width, user-scalable = no">
+</head>
+<body>
+<canvas id="canvas" ></canvas>
+<script type="text/javascript" src="canvasScript.js" charset="utf-8"></script>
+<script type="text/javascript" >
+	//get canvas
+var canvas = document.getElementById("canvas");
+//full screen
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+//是否支持触摸
+var touchable = 'createTouch' in document;
+if (touchable) {
+    canvas.addEventListener('touchstart', onTouchStart, false);
+    canvas.addEventListener('touchmove', onTouchMove, false);
+}
+else
+{
+      alert("touchable is false !");
+}
+//上一次触摸坐标
+var lastX;
+var lastY;
 
-		
-		(function(){
-		   var car=document.createElement('canvas');	//´´½¨ÔªËØ
-		   car.height=carHeight+axisDelta+radius;	//ÉèÖÃ¸ß¶È
-		   car.width=carWidth;				//ÉèÖÃ¿í¶È
-		   w=car.getContext('2d');
-		})();						//Ö±½ÓÖ´ÐÐ
+var ctx =canvas.getContext("2d");
+ctx.lineWidth=10;//画笔粗细
+ctx.strokeStyle="#FF0000";//画笔颜色
 
-		function play(s){				//²ÎÊýsÊÇÒ»¸öbutton
-		   if(ani){					//Èç¹ûani²»Îªnull£¬Ôò´ú±íÎÒÃÇµ±Ç°ÒÑ¾­ÓÐÁËÒ»¸ö¶¯»­
-		      clearInterval(ani);			//ËùÒÔÎÒÃÇÐèÒªÇå³ýËü(Í£Ö¹¶¯»­)
-		      ani=null;					
-		      s.innerHTML='Play';			//ÖØÃüÃû¸Ã°´Å¥Îª¡°²¥·Å¡±
-		   }else{
-		      ani=setInterval(drawCanvas,40);		//ÎÒÃÇ½«ÉèÖÃ¶¯»­Îª25fps[Ö¡Ã¿Ãë]£¬40/1000£¬¼´Îª¶þÊ®Îå·ÖÖ®Ò»
-		      s.innerHTML='Pause';			//ÖØÃüÃû¸Ã°´Å¥Îª¡°ÔÝÍ£¡±
-		   }
-		}
+//触摸开始事件
+function onTouchStart(event) {
+    event.preventDefault();
+    lastX=event.touches[0].clientX;
+    lastY=event.touches[0].clientY;
+    drawRound(lastX,lastY);
 
-		//init
-	    	function init(){
-		   c=document.getElementById('canvas').getContext('2d');
-		   drawCanvas();
-		}
+}
 
-		function drawCanvas(){
-		   c.clearRect(0,0,c.canvas.width, c.canvas.height);	//Çå³ýCanvas(ÒÑÏÔÊ¾µÄ)£¬±ÜÃâ²úÉú´íÎó
-		   c.save();						//±£´æµ±Ç°×ø±êÖµÒÔ¼°×´Ì¬£¬¶ÔÓ¦µÄÀàËÆ¡°push¡±²Ù×÷
 
-		   drawGrass();						//»­±³¾°
-		   c.translate(carX,0);					//ÒÆ¶¯Æðµã×ø±ê
-		   drawCar();						//»­Æû³µ(Òþ²ØµÄcanvas)
-		   c.drawImage(w.canvas,0,carY);			//»­×îÖÕÏÔÊ¾µÄÆû³µ
-		   c.restore();						//»Ö¸´CanvasµÄ×´Ì¬£¬¶ÔÓ¦µÄÊÇÀàËÆ¡°pop¡±²Ù×÷
-		   carX+=dx;						//ÖØÖÃÆû³µÔÚXÖá·½ÏòµÄÎ»ÖÃ£¬ÒÔÄ£ÄâÏòÇ°×ß
-		   carAlpha+=dx/radius;					//°´±ÈÀýÔö¼ÓÂÖÌ¥½Ç¶È
+//触摸滑动事件
+function onTouchMove(event) {
+    try
+    {
+      event.preventDefault();
+      drawLine(lastX,lastY,event.touches[0].clientX,event.touches[0].clientY);
+      lastX=event.touches[0].clientX;
+      lastY=event.touches[0].clientY;
+    }
+    catch(err){
+        alert( err.description);
+    }
 
-		   if(carX>c.canvas.width){				//ÉèÖÃÄ³Ð©¶¨ÆÚµÄ±ß½çÌõ¼þ
-		      carX=-carWidth-10;				//Ò²¿ÉÒÔ½«ËÙ¶È·´ÏòÎªdx*=-1;
-		   }
-		}
+}
 
-		function drawGrass(){
-		   //´´½¨ÏßÐÔ½¥±ä£¬Ç°Á½¸ö²ÎÊýÎª½¥±ä¿ªÊ¼µã×ø±ê£¬ºóÁ½¸öÎª½¥±ä½áÊøµã×ø±ê
-		   var grad=c.createLinearGradient(0,c.canvas.height-grassHeight,0,c.canvas.height);
-		   //ÎªÏßÐÔ½¥±äÖ¸¶¨½¥±äÉ«£¬0±íÊ¾½¥±äÆðÊ¼É«£¬1±íÊ¾½¥±äÖÕÖ¹É«
-		   grad.addColorStop(0,'#33CC00');
-		   grad.addColorStop(1,'#66FF22');
-		   c.fillStyle=grad;
-  	 	   c.lineWidth=0;
-		   c.fillRect(0,c.canvas.height-grassHeight,c.canvas.width,grassHeight);
-		   
-		}
+//画圆
+function drawRound(x,y)
+{
+    ctx.fillStyle="#FF0000";
+    ctx.beginPath();
+    ctx.arc(x,y,5,0,Math.PI*2,true);
+    ctx.closePath();
+    ctx.fill();
+}
+//画线
+function drawLine(startX,startY,endX,endY)
+{
+    ctx.beginPath();
+    ctx.lineCap="round";
+    ctx.moveTo(startX,startY);
+    ctx.lineTo(endX,endY);
+    ctx.stroke();
+}
 
-		function drawCar(){
-		   w.clearRect(0,0,w.canvas.width,w.canvas.height);		//Çå¿ÕÒþ²ØµÄ»­°å
-		   w.strokeStyle='#FF6600';					//ÉèÖÃ±ß¿òÉ«
-  		   w.lineWidth=2;						//ÉèÖÃ±ß¿òµÄ¿í¶È£¬µ¥Î»ÎªÏñËØ
-		   w.fillStyle='#FF9900';					//ÉèÖÃÌî³äÉ«
-		   w.beginPath();						//¿ªÊ¼»æÖÆÐÂÂ·¾¶
-		   w.rect(0,0,carWidth,carHeight);				//»æÖÆÒ»¸ö¾ØÐÎ
-		   w.stroke();							//»­±ß¿ò
-		   w.fill();							//Ìî³ä±³¾°
-		   w.closePath();						//¹Ø±Õ»æÖÆµÄÐÂÂ·¾¶
-		   drawTire(tiresDelta+radius,carHeight+axisDelta);		//ÎÒÃÇ¿ªÊ¼»­µÚÒ»¸öÂÖ×Ó
-		   drawTire(carWidth-tiresDelta-radius,carHeight+axisDelta);	//Í¬ÑùµÄ£¬µÚ¶þ¸ö
-		   
-		}
-
-		function drawTire(x,y){
-		   w.save();
-		   w.translate(x,y);
-		   w.rotate(carAlpha);
-		   w.strokeStyle='#3300FF';
-		   w.lineWidth=1;
-		   w.fillStyle='#0099FF';
-		   w.beginPath();
-		   w.arc(0,0,radius,0,2*Math.PI,false);
-		   w.fill();
-		   w.closePath();
-		   w.beginPath();
-		   w.moveTo(radius,0);
-		   w.lineTo(-radius,0);
-		   w.stroke();
-		   w.closePath();
-		   w.beginPath();
-		   w.moveTo(0,radius);
-		   w.lineTo(0,-radius);
-		   w.stroke();
-		   w.closePath();
-		   w.restore();
-
-		}
-
-		function speed(delta){
-		   var newRate=Math.max(rate+delta,0.1);
-		   dx=newRate/rate*dx;
-		   rate=newRate;
-		}
-	    </script>
-   </head>
-   <body onload="init();">
-      <canvas id="canvas" width="1000" height="600">Your browser does not support the <code>&lt;canvas&gt;</code>-element.Please think about updating your brower!</canvas>
-      <div id="controls">
-         <button type="button" onclick="speed(-0.1);">Slower</button>
-         <button type="button" onclick="play(this);">Play</button>
-	 <button type="button" onclick="speed(+0.1)">Faster</button>
-      </div>
-   </body>
-</html>
-<style type="text/css">
-	  body
-	 {
-	    padding:0;
-	    margin:0;
-	 }
-
-	 /*¶¨Òå¶¯»­£º´Ó-400pxµÄÎ»ÖÃÒÆ¶¯µ½1600pxµÄÎ»ÖÃ */
-	 @keyframes carAnimation
-	 {
-	    0% { left:-400px; }		/* Ö¸¶¨³õÊ¼Î»ÖÃ£¬0%µÈÍ¬ÓÚfrom*/
-	    100% { left:1600px; }	/* Ö¸¶¨×îÖÕÎ»ÖÃ,100%µÈÍ¬ÓÚto*/
-	 }
-
-	 /* Safari and Chrome */
-	 @-webkit-keyframes carAnimation
-	 {
-	    0% {left:-400px; }
-	    100% {left:1600px; }
-	 }
-
-	 /* Firefox */
-	 @-moz-keyframes carAnimation
-	 {
-	    0% {left:-400; }
-	    100% {left:1600px; } 
-	 }
-
-	 /*IEÔÝ²»Ö§³Ö,´Ë´¦¶¨ÒåÊÇÎªÁËÏòºó¼æÈÝIE10*/
-	 @-ms-keyframes carAnimation
-	 {
-	    0% {left:-400px; }
-	    100%{left:1600px; }
-	 }
-
-	 @keyframes tyreAnimation
-	 {
-	    0% {transform: rotate(0); }
-	    100% {transform: rotate(1800deg); }
-	 }
-
-	 @-webkit-keyframes tyreAnimation
-	 {
-	    0% { -webkit-transform: rotate(0); }
-	    100% { -webkit-transform: rotate(1800deg); }
-	 }
-
-	 @-moz-keyframes tyreAnimation
-	 {
-	    0% { -moz-transform: rotate(0); }
-	    100% { -moz-transform: rotate(1800deg); }
-	 }
-
-	 @-ms-keyframes tyreAnimation
-	 {
-	    0% { -ms-transform: rotate(0); }
-	    100% { -ms-transform: rotate(1800deg); }
-	 }
-
-	 #container
-	 {
-	    position:relative;
-	    width:100%;
-	    height:600px;
-	    overflow:hidden;		/*Õâ¸öºÜÖØÒª*/
-	 }
-
-	 #car
-	 {
-	    position:absolute; 		/*Æû³µÔÚÈÝÆ÷ÖÐ²ÉÓÃ¾ø¶Ô¶¨Î»*/
-	    width:400px;
-	    height:210px;		/*Æû³µµÄ×Ü¸ß¶È£¬°üÀ¨ÂÖÌ¥ºÍµ×ÅÌ*/
-	    z-index:1;			/*ÈÃÆû³µÔÚ±³¾°µÄÉÏ·½*/
-	    top:300px;			/*¾à¶¥¶ËµÄ¾àÀë(yÖá)*/
-	    left:50px;			/*¾à×ó²àµÄ¾àÀë(xÖá)*/
-
-	    /*ÒÔÏÂÄÚÈÝ¸³Óè¸ÃÔªËØÔ¤ÏÈ¶¨ÒåµÄ¶¯»­¼°Ïà¹ØÊôÐÔ*/
-	    -webkit-animation-name:carAnimation;		/*Ãû³Æ*/
-	    -webkit-animation-duration:10s;			/*³ÖÐøÊ±¼ä*/
-	    -webkit-animation-iteration-count:infinite;		/*µü´ú´ÎÊý-ÎÞÏÞ´Î*/
-	    -webkit-animation-timing-function:linear;		/*²¥·Å¶¯»­Ê±´ÓÍ·µ½Î²¶¼ÒÔÏàÍ¬µÄËÙ¶È*/
-
-	    -moz-animation-name:carAnimation;		/*Ãû³Æ*/
-	    -moz-animation-duration:10s;			/*³ÖÐøÊ±¼ä*/
-	    -moz-animation-iteration-count:infinite;		/*µü´ú´ÎÊý-ÎÞÏÞ´Î*/
-	    -moz-animation-timing-function:linear;		/*²¥·Å¶¯»­Ê±´ÓÍ·µ½Î²¶¼ÒÔÏàÍ¬µÄËÙ¶È*/
-
-	    -ms-animation-name:carAnimation;		/*Ãû³Æ*/
-	    -ms-animation-duration:10s;			/*³ÖÐøÊ±¼ä*/
-	    -ms-animation-iteration-count:infinite;		/*µü´ú´ÎÊý-ÎÞÏÞ´Î*/
-	    -ms-animation-timing-function:linear;		/*²¥·Å¶¯»­Ê±´ÓÍ·µ½Î²¶¼ÒÔÏàÍ¬µÄËÙ¶È*/
-
-	    animation-name:carAnimation;		/*Ãû³Æ*/
-	    animation-duration:10s;			/*³ÖÐøÊ±¼ä*/
-	    animation-iteration-count:infinite;		/*µü´ú´ÎÊý-ÎÞÏÞ´Î*/
-	    animation-timing-function:linear;		/*²¥·Å¶¯»­Ê±´ÓÍ·µ½Î²¶¼ÒÔÏàÍ¬µÄËÙ¶È*/
-	 }
-
-	 /*³µÉí*/
-	 #chassis
-	 {
-	    position:absolute;
-	    width:400px;
-	    height:130px;
-	    background:#FF9900;
-	    border: 2px solid #FF6600;
-	 }
 	
-	 /*ÂÖÌ¥*/
-	 .tire
-	 {
-	    z-index:1;			/*Í¬ÉÏ£¬ÂÖÌ¥Ò²Ó¦ÖÃÓÚ±³¾°µÄÉÏ·½*/
-	    position:absolute;
-	    bottom:0;
-	    border-radius:60px;		/*Ô²°ë¾¶*/
-	    height:120px;		/* 2*radius=height */
-	    width:120px;		/* 2*radius=width */
-	    background:#0099FF;		/*Ìî³äÉ«*/
-	    border:1px solid #3300FF;
-
-	    -webkit-animation-name:tyreAnimation;
-	    -webkit-animation-duration:10s;
-	    -webkit-animation-iteration-count:infinite;
-	    -webkit-animation-timing-function:linear;
-
-	    -moz-animation-name:tyreAnimation;
-	    -moz-animation-duration:10s;
-	    -moz-animation-iteration-count:infinite;
-	    -moz-animation-timing-function:linear;
-
-	    -ms-animation-name:tyreAnimation;
-	    -ms-animation-duration:10s;
-	    -ms-animation-iteration-count:infinite;
-	    -ms-animation-timing-function:linear;	    
-
-	    animation-name:tyreAnimation;
-	    animation-duration:10s;
-	    animation-iteration-count:infinite;
-	    animation-timing-function:linear;
-	 }
-
-	 #fronttire
-	 {
-	    right:20px;		/*ÉèÖÃÓÒ±ßµÄÂÖÌ¥¾àÀë±ßÔµµÄ¾àÀëÎª20*/
-	 }
-
-	 #backtire
-	 {
-	    left:20px;		/*ÉèÖÃ×ó±ßµÄÂÖÌ¥¾àÀë±ßÔµµÄ¾àÀëÎª20*/
-	 }
-
-	 #grass
-	 {
-	    position:absolute;	/*±³¾°¾ø¶Ô¶¨Î»ÔÚÈÝÆ÷ÖÐ*/
-	    width:100%;
-	    height:130px;
-	    bottom:0;
-	    /*ÈÃ±³¾°É«ÏßÐÔ½¥±ä,bottom,±íÊ¾½¥±äµÄÆðÊ¼´¦£¬µÚÒ»¸öÑÕÉ«ÖµÊÇ½¥±äµÄÆðÊ¼Öµ£¬µÚ¶þ¸öÑÕÉ«ÖµÊÇÖÕÖ¹Öµ */
-	    background:linear-grdaient(bottom,#33CC00,#66FF22);
-	    background:-webkit-linear-gradient(bottom,#33CC00,#66FF22);
-	    background:-moz-linear-gradient(bottom,#33CC00,#66FF22);
-	    background:-ms-linear-gradient(bottom,#33CC00,#66FF22);	
-	 }
-
-	 .hr,.vr
-	 {
-	    position:absolute;
-	    background:#3300FF;
-	 }
-
-	 .hr
-	 {
-	    height:1px;
-	    width:100%;		/*Ë®Æ½Ïß*/
-	    left:0;
-	    top:60px;
-	 }
-
-	 .vr
-	 {
-	    width:1px;
-	    height:100%;	/*´¹Ö±Ïß*/
-	    left:60px;
-	    top:0;
-	 }
-</style>
-<script type="text/javascript">
-	$(function(){
-	     var rot=0;
-	     var prefix=$('.tire').css('-o-transform')?'-o-transform':($('.tire').css('-ms-transform')?'-ms-transform':($('.tire').css('-moz-transform')?'-moz-transform':($('.tire').css('-webkit-transform')?'-webkit-transform':'transform')));
-
-	     var origin={		/*ÉèÖÃÎÒÃÇµÄÆðÊ¼µã*/
-		 left:-400
-	     };
-
-	     var animation={		/*¸Ã¶¯»­ÓÉjQueryÖ´ÐÐ*/
-		 left:1600		/*ÉèÖÃÎÒÃÇ½«ÒÆ¶¯µ½µÄ×îÖÕÎ»ÖÃ*/
-	 };
-
-	     var rotate=function(){	/*¸Ã·½·¨½«±»Ðý×ªµÄÂÖ×Óµ÷ÓÃ*/
-		 rot+=2;
-		 $('.tire').css(prefix,'rotate('+rot+'deg)');
-	 };
-
-	     var options={		/*½«Òª±»jQueryÊ¹ÓÃµÄ²ÎÊý*/
-		 easing:'linear',	/*Ö¸¶¨ËÙ¶È£¬´Ë´¦Ö»ÊÇÏßÐÔ£¬¼´ÎªÔÈËÙ*/
-		 duration:10000,	/*Ö¸¶¨¶¯»­³ÖÐøÊ±¼ä*/
-		 complete:function(){
-		    $('#car').css(origin).animate(animation,options);
-		 },
-		 step:rotate
-	 };
-
-	     options.complete();
-	  });
 </script>
+</body>
+</html>
+
 
