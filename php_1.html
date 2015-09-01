@@ -19,46 +19,22 @@
         <p class="header">什么是线程安全与非线程安全？</p>
       </header>
       <section>
-        <p>线程安全就是在多线程环境下也不会出现数据不一致，而非线程安全就有可能出现数据不一致的情况。
+	 	<p>线程安全就是在多线程环境下也不会出现数据不一致，而非线程安全就有可能出现数据不一致的情况。</p>
+		<p>线程安全由于要确保数据的一致性，所以对资源的读写进行了控制，换句话说增加了系统开销。所以在单线程环境中效率比非线程安全的效率要低些，但是如果线程间数据相关，需要保证读写顺序，用线程安全模式
+这个主要是针对web server 而言，在windows环境下，如果你使用的web server 是apchae 或者 iis 7以下版本，则应该选择线程安全的安装文件，而如果你使用Fast-cgi模式时，可以选择非线程安全，因为 web sever 本身能保证线程安全。</p>
+		<p>当然还有二进制文件编译时所使用的编译器：vc9 (vs系列) vc6(gcc)
+如楼上所言，是针对web server的，部分web server在处理应用请求的时候是用多线程而非多进程的方式处理，线程方式因为涉及到共享寄存器和内存，所以很容易出错，这个时候程序就需要花一些额外的经历去处理寄存器中的数据一致性，即保证线程安全。所以是否采用线程安全主要看你的webserver所采用的PHP请求处理方式，如果是多线程处理，那么请选择线程安全的，否则选择非线程安全的，如楼上所说Fast-cgi方式可选择非线程安全的.</p>
+		<p>先从字面意思上理解，None-ThreadSafe就是非线程安全，在执行时不进行线程（thread）安全检查；Thread Safe就是线程安全，执行时会进行线程（thread）安全检查，以防止有新要求就启动新线程的 CGI 执行方式耗尽系统资源。</p>
 
-线程安全由于要确保数据的一致性，所以对资源的读写进行了控制，换句话说增加了系统开销。所以在单线程环境中效率比非线程安全的效率要低些，但是如果线程间数据相关，需要保证读写顺序，用线程安全模式
-
-这个主要是针对web server 而言，在windows环境下，如果你使用的web server 是apchae 或者 iis 7以下版本，则应该选择线程安全的安装文件，而如果你使用Fast-cgi模式时，可以选择非线程安全，因为 web sever 本身能保证线程安全。
-</p>
-当然还有二进制文件编译时所使用的编译器：vc9 (vs系列) vc6(gcc)
-<br/>
-如楼上所言，是针对web server的，部分web server在处理应用请求的时候是用多线程而非多进程的方式处理，线程方式因为涉及到共享寄存器和内存，所以很容易出错，这个时候程序就需要花一些额外的经历去处理寄存器中的数据一致性，即保证线程安全。
-<br/>
-所以是否采用线程安全主要看你的web server所采用的PHP请求处理方式，如果是多线程处理，那么请选择线程安全的，否则选择非线程安全的，如楼上所说Fast-cgi方式可选择非线程安全的
-<br/>
-先从字面意思上理解，None-Thread Safe就是非线程安全，在执行时不进行线程（thread）安全检查；Thread Safe就是线程安全，执行时会进行线程（thread）安全检查，以防止有新要求就启动新线程的 CGI 执行方式耗尽系统资源。
-<br/>
-再来看PHP的两种执行方式：ISAPI和FastCGI。FastCGI执行方式是以单一线程来执行操作，所以不需要进行线程的安全检查，除去线程安全检查的防护反而可以提高执行效率，所以，如果是以 FastCGI（无论搭配 IIS 6 或 IIS 7）执行 PHP ，都建议下载、执行 non-thread safe 的 PHP （PHP 的二進位檔有兩種包裝方式：msi 、zip ，請下載 zip 套件）。而线程安全检查正是为ISAPI方式的PHP准备的，因为有许多php模块都不是线程安全的，所以需要使用Thread Safe的PHP。
-<br/>
+</section>
+<section>
+	再来看PHP的两种执行方式：ISAPI和FastCGI。FastCGI执行方式是以单一线程来执行操作，所以不需要进行线程的安全检查，除去线程安全检查的防护反而可以提高执行效率，所以，如果是以 FastCGI（无论搭配 IIS 6 或 IIS 7）执行 PHP ，都建议下载、执行 non-thread safe 的 PHP （PHP 的二進位檔有兩種包裝方式：msi 、zip ，請下載 zip 套件）。而线程安全检查正是为ISAPI方式的PHP准备的，因为有许多php模块都不是线程安全的，所以需要使用Thread Safe的PHP。
 说到这里，大家应该知道应该如何选择哪个版本的PHP了。None-Thread Safe or Thread Safe，您会选择哪个？
-<br/>
-现在的Windows版本可以在PHP官方PHP For Windows（http://windows.php.net/download/）下载，下载的时候同版本有VC9 x86 Non Thread Safe、VC9 x86 Thread Safe、VC6 x86 Non Thread Safe、VC6 x86 Thread Safe等四个版本。那么这些版本有什么区别呢？
-<br/>
-VC9的版本是用legacy VS 2008编译的，VC6的版本是用legacy VS6编译的。
-<br/>
-如果你是在windows下使用IIS+PHP的话，你需要下载VC9的版本。
-如果你是在windows下使用Apache+PHP的话，你需要下载VC6的版本。
-<br/>
-Non Thread Safe是指非线程安全，Thread Safe则是指线程安全。
-<br/>
+现在的Windows版本可以在PHP官方PHP For Windows（http://windows.php.net/download/）下载，下载的时候同版本有VC9 x86 Non Thread Safe、VC9 x86 Thread Safe、VC6 x86 Non Thread Safe、VC6 x86 Thread Safe等四个版本。那么这些版本有什么区别呢？VC9的版本是用legacy VS 2008编译的，VC6的版本是用legacy VS6编译的。如果你是在windows下使用IIS+PHP的话，你需要下载VC9的版本。如果你是在windows下使用Apache+PHP的话，你需要下载VC6的版本。Non Thread Safe是指非线程安全，Thread Safe则是指线程安全。<
 如果是使用ISAPI的方式来运行PHP就必须用Thread Safe(线程安全)的版本；而用FastCGI模式运行PHP的话就没有必要用线程安全检查了，用None Thread Safe(NTS，非线程安全)的版本能够更好的提高效率。
 
-<br/>
 如何判断：
-通过phpinfo(); 查看其中的 Thread Safety 项，这个项目就是查看是否是线程安全，如果是：enabled，一般来说应该是ts版，否则是nts版。</h3>
-
-
-
-<h3>
-<a id="" class="anchor"  aria-hidden="true"><span class="octicon octicon-link"></span></a></h3>
-
-<h3>
-<a id="" class="anchor" aria-hidden="true"><span class="octicon octicon-link"></span></a>...</h3>
+通过phpinfo(); 查看其中的 Thread Safety 项，这个项目就是查看是否是线程安全，如果是：enabled，一般来说应该是ts版，否则是nts版。
 </section>
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
